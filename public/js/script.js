@@ -62,9 +62,12 @@ $(function()
 
 	websocket.on('Actualiza',function(data){
 		$("#Users").html("");
-		for(i in data){
-			$("#Users").append("<p>Nombre: "+data[i].Nombre+" - Puntaje: "+data[i].Puntaje+"</p>");
-		}
+		var cont = 0;
+		for (var i = data.length - 1; i >= 0; i--) {
+			cont++;
+			$("#Users").append("<p><b>"+cont+". "+data[i].Nombre+" - "+data[i].Puntaje+"</b></p>");
+		};
+		
 	});
 
 	websocket.on('DibujeJuego',function(data){
@@ -79,6 +82,11 @@ $(function()
 
 	websocket.on("Puntua",function(info){
 		alertify.error("El usuario: "+info+" ¡Puntua!");
+	});
+
+	websocket.on("BorraPuntajes",function(){
+		Puntaje = 0;
+		DomPuntos.html(Puntaje);
 	});
 // Función que permite dibujar la cuadricula en el id="Juego" segun la mariz optenida por lib.generaGrilla() del Archivo juego.js
 function DibujaJuego(Juego){
@@ -133,7 +141,8 @@ function validaClick(id,click){
 var     segundosString = '00',
 		minutosString = '00',
 		horasString = '00',
-		reloj='';
+		reloj='',
+		fin = false;
 function timer(){
 	if(numClick<NumNumeros){	
 		if(segundos<60){
@@ -147,7 +156,10 @@ function timer(){
 			minutos=0;
 		}
 	}else{
-		alertify.alert("<b>Felicitaciones a terminado el juego en: "+horas+":"+minutos+":"+segundos+" y su puntaje fue de: "+Puntaje+"</b>");
+		if(!fin){
+			alertify.alert("<b>Felicitaciones a terminado el juego en: "+horas+":"+minutos+":"+segundos+" y su puntaje fue de: "+Puntaje+"</b>");
+			fin = true;
+		}
 	}
 	reloj = horasString+":"+minutosString+":"+segundosString;
 	$("#Cronometro").html(reloj);
@@ -156,17 +168,21 @@ function timer(){
 
 
 $('#Start').click(function(){
-	numClick=0;
-	Puntaje=0;
-	Juego = [];
-	DomPuntos.html(Puntaje);	
-	iniciaJuego()
-	DomMensajes.html("");
-	segundos = 00;
-	minutos = 00;
-	horas = 00;
-	websocket.emit('reiniciaJuego',{Juego: Juego, Clicks: numClick});
-
+	if(numClick===121){
+		numClick=0;
+		Puntaje=0;
+		Juego = [];
+		DomPuntos.html(Puntaje);	
+		iniciaJuego()
+		DomMensajes.html("");
+		segundos = 00;
+		minutos = 00;
+		horas = 00;
+		fin = false;
+		websocket.emit('reiniciaJuego',{Juego: Juego, Clicks: numClick});
+	}else{
+		alertify.alert('La partida debe terminar para poderla reiniciar');
+	}
 });
 // Prohíbe el uso de ctrl + f tomado de http://stackoverflow.com/questions/7091538/is-it-possible-to-disable-ctrl-f-of-find-in-page
 window.addEventListener("keydown",function (e) {

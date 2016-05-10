@@ -64,11 +64,12 @@ io.sockets.on("connection",function(socket)
   });
  
   socket.on('juega',function(data){
-    buscaUser(data);
+    findUser(socket.nickname,data.Puntaje);
     Juego = data.Juego;
     io.sockets.emit('DibujeJuego',{Juego: data.Juego, Clicks: data.Clicks});
-    io.sockets.emit('Actualiza',usuarios);
+    io.sockets.emit('Actualiza',ordenarArray());
     io.sockets.emit("Puntua",socket.nickname);
+
   });
 
   socket.on('reiniciaJuego',function(data){
@@ -76,6 +77,7 @@ io.sockets.on("connection",function(socket)
     reiniciaUsuarios();
     io.sockets.emit('Actualiza',usuarios);
     io.sockets.emit('DibujeJuego',{Juego: data.Juego, Clicks: data.Clicks});
+    io.sockets.emit('BorraPuntajes');
   });
 
   socket.on('disconnect', function () 
@@ -98,13 +100,13 @@ function reiniciaUsuarios(){
   }
 }
 
-function buscaUser(data){
+function findUser(user,puntaje){
   for(i in usuarios){
-      if(usuarios[i].Nombre === data.Nombre){
-         usuarios[i].Puntaje = data.Puntaje;
-         break;
-      };
+    if(usuarios[i].Nombre === user){
+      usuarios[i].Puntaje = puntaje;
+      break;
     }
+  }
 }
 
 function buscaEliminar(nombre){
@@ -115,6 +117,21 @@ function buscaEliminar(nombre){
       };
     }
   return -1;
+}
+
+function ordenarArray(){
+  var ArrayOrdenado = usuarios;
+  var cont = 0;
+  ArrayOrdenado.sort(function (a, b) {
+  if (a.Puntaje > b.Puntaje) {
+    return 1;
+  }
+  if (a.Puntaje < b.Puntaje) {
+    return -1;
+  }
+  return 0;
+});
+return ArrayOrdenado;
 }
 
 console.log('Waiting for connection');
