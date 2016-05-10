@@ -1,0 +1,16 @@
+{
+  "name": "multiplayer",
+  "version": "1.0.0",
+  "description": "Juego 121",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodejs server.js"
+  },
+  "keywords": [
+    "Socket",
+    "io"
+  ],
+  "author": "Franklyn Lombana",
+  "license": "ISC"
+}
