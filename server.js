@@ -29,6 +29,7 @@ app.get("*", function(req, res){
 var usuarios = [];
 var Juego = [];
 var usuariosConectados = {};
+var NumClicks = 0;
 console.log('Servidor disponible en http://localhost:' + 3000);
 
 //Socket connection handler
@@ -50,7 +51,7 @@ io.sockets.on("connection",function(socket)
       console.log(socket.nickname);
       usuarios.push(data);
       io.sockets.emit('Users',usuarios);
-      io.sockets.emit("conectados", socket.nickname);
+      io.sockets.emit("conectados", {Nombre: socket.nickname, Clicks: NumClicks});
     }
         
   });
@@ -66,6 +67,7 @@ io.sockets.on("connection",function(socket)
   socket.on('juega',function(data){
     findUser(socket.nickname,data.Puntaje);
     Juego = data.Juego;
+    NumClicks = data.Clicks;
     io.sockets.emit('DibujeJuego',{Juego: data.Juego, Clicks: data.Clicks});
     io.sockets.emit('Actualiza',ordenarArray());
     io.sockets.emit("Puntua",socket.nickname);
@@ -75,10 +77,19 @@ io.sockets.on("connection",function(socket)
   socket.on('reiniciaJuego',function(data){
     Juego = data.Juego;
     reiniciaUsuarios();
+
+    //new line
+    io.sockets.emit('SeReiniciaJuego',{usuarios: usuarios, User: socket.nickname});
+
     io.sockets.emit('Actualiza',usuarios);
     io.sockets.emit('DibujeJuego',{Juego: data.Juego, Clicks: data.Clicks});
     io.sockets.emit('BorraPuntajes');
   });
+
+  socket.on("ActualizaClicks",function(){
+    NumClicks = 0
+  });
+
 
   socket.on('disconnect', function () 
   {

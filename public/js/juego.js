@@ -105,6 +105,7 @@ function randomColor()
     };
     return {
         generaGrilla : generaGrilla,
-        generaClases: generaClases
+        generaClases: generaClases,
+        randomColor: randomColor
     }
 }();
