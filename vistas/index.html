@@ -14,24 +14,34 @@
 	<script src="/socket.io/socket.io.js"></script>
 	<script src="js/alertify.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script src = "https://code.createjs.com/createjs-2015.05.21.min.js"></script>
 	<script src="js/juego.js"></script>
 	<script src="js/script.js"></script>
+
 </head>
 <body>
-<div id="Users"></div>
+<div id="sound" class="sound"></div>
+<center>
+		<div><h2 id='Cronometro'>00:00</h2></div>
+		<div><span>Puntaje <b id="Puntos"> 0 </b></span></div>
+</center>
+
+<div class="NBuscar">
+	
+		<h1>Objetivo:  &nbsp;<b id="NumeroaBuscar"></b></h1>
+		<div id="Users"></div>
+</div>
+
 <div align="center">
-	<h1>Busca el:  &nbsp;<b id="NumeroaBuscar"></b></h1>
-	<hr>
-<div><h2 id='Cronometro'>00:00</h2></div>
-<div><span>Puntaje <b id="Puntos"> 0 </b></span></div>
+
+
 <div id="Juego"></div>
-<button type="submit" class="btn btn-primary btn-lg animated fadeInDownBig" id="Start" >Reiniciar</button>
+<center>
+	<button type="submit" class="btn btn-primary btn-lg animated fadeInDownBig" id="Start" >Reiniciar</button>
+</center>
 <div id="Mensajes"></div>
 
 </div>
-<hr>
-<div align="center">
-<h1> Ingeniería de Sistemas - Universidad de Cundinamarca </h1>
-</div>
+
 </body>
 </html>
