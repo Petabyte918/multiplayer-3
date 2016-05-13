@@ -11,12 +11,17 @@ $(function()
 		numClick = 0, // Variable que guarda el numero de clicks realizados por el usuario
 		Juego = [], //Guarda toda la matriz del juego
 		NomUser = '',
-		tabla = '';; 
+		tabla = '',
+		newJuego = 30;
+
 
 // Inicialización de componentes repetitivos del DOM
 	var DomPuntos = $("#Puntos"),
 		DomMensajes = $('#Mensajes'),
-		DomNum = $("#NumeroaBuscar");
+		DomNum = $("#NumeroaBuscar"),
+		DomUser = $("#Usuario"),
+		DomId = $("#id");
+
 		
 //se crea un json con sonidos...
 	var audios = [
@@ -43,13 +48,15 @@ $(function()
 		if(Juego[0].length === 12){Juego[0].shift(); DibujaJuego(Juego);}else{DibujaJuego(Juego);};
 	};
 
-	alertify.prompt("<center style='font-size:30px'>Nickname</center>", "",
-  		function(evt, value ){
-  		websocket.emit('newUser',{Nombre:value,Puntaje: 0, Color: lib.randomColor()});
-    	websocket.on('error',function(data){
+  	function init(){
+  		console.log(DomUser);
+  		setTimeout(function(){
+  		websocket.emit('newUser',{Nombre:DomUser.text(),Puntaje: 0, Color: lib.randomColor()});
+  		websocket.on('error',function(data){
     		if(data){
     			alertify.alert('El Usuario ya Existe');
-    			setTimeout(function(){location.reload()},1000);
+    			//setTimeout(function(){location.reload()},1000);
+    			//Emitir una desconeccion y volver a conectar
     		}else{
     			websocket.on('conectados',function(info){
     				alertify.success("Bienvenido "+info.Nombre);
@@ -58,22 +65,22 @@ $(function()
     			});
     		}
     	});
-  	},function(){
-    	alertify.error('Jugara solo');
-  	});
-  
+  	},1000);
+  	}init();
+
+
 	websocket.on('Users',function(data){
-		console.log(data);
 		$("#Users").html("");
 		var cont = 0;
 		for (var i = data.length - 1; i >= 0; i--) {
 			cont++;
-			$("#Users").append("<div id='txt'><b id='b' style='color:"+data[i].Color+"'>"+cont+". "+data[i].Nombre+" - "+data[i].Puntaje+"</b></div>");
+			$("#Users").append("<b id='b' style='color:"+data[i].Color+"'>"+cont+". "+data[i].Nombre+" - "+data[i].Puntaje+"</b><br>");
 		};
 		reloadTable(data,0);
 		if(data.length<=1){
 			iniciaJuego();
 			websocket.emit('IniJuego',Juego);
+			numClick = 0;
 		}else{
 			websocket.emit('ingresaNewUser');
 			websocket.on('inicioJuego',function(juego){
@@ -115,7 +122,7 @@ $(function()
 
 	websocket.on("SeReiniciaJuego",function(data){
 		reloadTable(data,1);
-		alertify.dialog('alert').set({transition:'slide',title: "<b>"+data.User+"</b> Reinicio el juego" ,message: "<h3>Los puntajes quedaron así: </h3>"+tabla}).show(); 
+		alertify.dialog('alert').set({transition:'slide',title: "<b>El sistema reinicio el juego</b> " ,message: "<h3>Los puntajes quedaron así: </h3>"+tabla}).show(); 
 	});
 
 function reloadTable(data,tipo){
@@ -137,22 +144,20 @@ function reloadTable(data,tipo){
 
 // Función que permite dibujar la cuadricula en el id="Juego" segun la mariz optenida por lib.generaGrilla() del Archivo juego.js
 function DibujaJuego(Juego){
-	console.log("entro");
       DomMensajes.html("");
       DomNum.html(numClick+1);
-       var tds = `<table id="MyTable">
-                    <tbody>`;
+       var tds = '<table id="MyTable">'+
+                    '<tbody>';
     	for (var i = 0; i < Juego.length; i++) {
     		tds += '<tr>';
     		for (var j = 0; j < Juego[i].length; j++) {
     				if(!Juego[i][j].Clickeado){
-    					tds += `<td><div id="${Juego[i][j].Id}" class="cuadrado ${Juego[i][j].Clase}" style="background-color:${Juego[i][j].Color}"><div id="Numero">${Juego[i][j].Numero}<div></div></td>`;
+    					tds += "<td><div id='"+Juego[i][j].Id+"' class='cuadrado "+Juego[i][j].Clase+"' style='background-color:"+Juego[i][j].Color+"'><div id='Numero'>"+Juego[i][j].Numero+"<div></div></td>";
     				}
     		};
-    		tds += `</tr>`;
+    		tds += '</tr>';
     	};
-    		tds += `</tbody>
-              </table>`;
+    		tds += '</tbody></table>';
 			$("#Juego").html(tds);
 // Se asignan los eventos a todos los div de clase .cuadrado			
 	$(".cuadrado").click(function() {
@@ -198,7 +203,6 @@ function timer(){
 			segundosString = segundos<10 ? "0"+segundos++ : segundos++;
 		}else if(minutos<60){
 			minutosString = minutos<10 ? "0"+minutos++ : minutos++;
-			console.log("entre"+minutosString);
 			segundos=0;
 		}else if(horas<24){
 			horasString = horas<10 ? "0"+horas++ : horas++;
@@ -212,6 +216,7 @@ function timer(){
 			websocket.emit("ActualizaClicks");
 			sound === true ? createjs.Sound.play("tada") : console.log("nosound");
 			fin = true;
+			newGame();
 		}
 	}
 	reloj = horasString+":"+minutosString+":"+segundosString;
@@ -229,6 +234,7 @@ $('#Start').click(function(){
 function reiniciaTodo(){
 		numClick=0;
 		Puntaje=0;
+		newJuego=30;
 		Juego = [];
 		DomPuntos.html(Puntaje);	
 		iniciaJuego()
@@ -237,8 +243,20 @@ function reiniciaTodo(){
 		minutos = 00;
 		horas = 00;
 		fin = false;
-		websocket.emit('reiniciaJuego',{Juego: Juego, Clicks: numClick});
+		websocket.emit('reiniciaJuego',{Juego: Juego, Clicks: numClick});		
 }
+
+
+function newGame(){
+	if(newJuego>0){
+		DomMensajes.html('<p id="Msg"> El juego se reiniciara automáticamente en: '+newJuego+'</p>');
+		newJuego--;
+		setTimeout(function(){newGame();},1000);
+	}else{
+		reiniciaTodo();
+	}	
+}
+
 
 // Prohíbe el uso de ctrl + f tomado de http://stackoverflow.com/questions/7091538/is-it-possible-to-disable-ctrl-f-of-find-in-page
 window.addEventListener("keydown",function (e) {

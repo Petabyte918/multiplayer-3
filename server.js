@@ -1,35 +1,61 @@
 // server.js
 var cons  = require("consolidate");
+var bodyParser  = require('body-parser');
 var express        = require('express');
 var app            = express();
+var session = require('express-session');
 var httpServer = require("http").createServer(app);
-//var Raspi = require("raspi-io");
 httpServer.listen(3000);
+
+// Login Facebook 
+var mongoose = require('mongoose');
+var passport = require('passport');
+require('./models/user');
+require('./routes/passport')(passport);
+
+var routes = require('./routes/rutas');
+
 var io= require('socket.io').listen(httpServer);
 
 io.set('log level',1);
-//var routes = require('./routes/rutas');
+
+
+mongoose.connect('mongodb://localhost/trikatuka', 
+  function(err, res) {
+    if(err) throw err;
+    console.log('Conectado con exito a la BD');
+});
+
+
 app.engine("html", cons.swig); //Template engine...
 app.set("view engine", "html");
 app.set("views", __dirname + "/vistas");
 app.use(express.static('public'));
 
 
+//app.use(express.cookieParser());
+//app.use(express.methodOverride());
+app.use(session({ secret: 'secretkey' }));
 
-app.get('/', function(req, res, next) {
-  res.render('index');
-});
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
-app.get("*", function(req, res){
-  
-  res.status(404).send("Página no encontrada :( en el momento");
+// Configuración de Express
+app.use(passport.initialize());
+app.use(passport.session());
 
-});
+
+
+app.use('/', routes);
+
+
+
 
 var usuarios = [];
 var Juego = [];
 var usuariosConectados = {};
 var NumClicks = 0;
+var newGame = false;
 console.log('Servidor disponible en http://localhost:' + 3000);
 
 //Socket connection handler
@@ -51,13 +77,16 @@ io.sockets.on("connection",function(socket)
       console.log(socket.nickname);
       usuarios.push(data);
       io.sockets.emit('Users',usuarios);
+
       io.sockets.emit("conectados", {Nombre: socket.nickname, Clicks: NumClicks});
     }
         
   });
 
   socket.on('IniJuego',function(juego){
-    Juego = juego;
+     Juego = juego;
+     NumClicks = 0;
+     io.sockets.emit("conectados", {Nombre: socket.nickname, Clicks: NumClicks});
   });
   
   socket.on('ingresaNewUser',function(){
@@ -75,15 +104,18 @@ io.sockets.on("connection",function(socket)
   });
 
   socket.on('reiniciaJuego',function(data){
-    Juego = data.Juego;
-    reiniciaUsuarios();
+    if(!newGame){
+      Juego = data.Juego;
+      reiniciaUsuarios();
 
-    //new line
-    io.sockets.emit('SeReiniciaJuego',{usuarios: usuarios, User: socket.nickname});
-
-    io.sockets.emit('Actualiza',usuarios);
-    io.sockets.emit('DibujeJuego',{Juego: data.Juego, Clicks: data.Clicks});
-    io.sockets.emit('BorraPuntajes');
+      //new line
+      io.sockets.emit('SeReiniciaJuego',{usuarios: usuarios, User: socket.nickname});
+      io.sockets.emit('Actualiza',usuarios);
+      io.sockets.emit('DibujeJuego',{Juego: data.Juego, Clicks: data.Clicks});
+      io.sockets.emit('BorraPuntajes');
+      setTimeout(function(){newGame=false},10000);
+    }
+    
   });
 
   socket.on("ActualizaClicks",function(){
@@ -93,6 +125,7 @@ io.sockets.on("connection",function(socket)
 
   socket.on('disconnect', function () 
   {
+      console.log(socket.nickname+" Se ha desconectado");
       //Eliminamos al usuario de los conectados
       delete usuariosConectados[socket.nickname];
       if(buscaEliminar(socket.nickname)!=-1){

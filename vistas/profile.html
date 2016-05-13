@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>{{title}}</title>
+  <meta name="Resource-type" content="Document" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/jquery.fullPage.css" />
+  <link rel="stylesheet" type="text/css" href="css/examples.css" />
+
+  <!--[if IE]>
+    <script type="text/javascript">
+       var console = { log: function() {} };
+    </script>
+  <![endif]-->
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+
+  <script type="text/javascript" src="js/jquery.fullPage.js"></script>
+  <script type="text/javascript" src="js/examples.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('#fullpage').fullpage({
+        sectionsColor: ['#1bbc9b', '#4BBFC3', '#7BAABE'],
+        anchors: ['firstPage', 'secondPage', '3rdPage'],
+        menu: '#menu',
+        loopTop: true,
+        loopBottom: true
+      });
+    });
+  </script>
+
+</head>
+<body>
+
+<ul id="menu">
+  <li data-menuanchor="firstPage" class="active"><a href="#firstPage">Mi Perfil</a></li>
+  <li data-menuanchor="secondPage"><a href="#secondPage">De qué trata</a></li>
+  <li data-menuanchor="3rdPage"><a href="#3rdPage">Jugar</a></li>
+  <li id="liSalir"><a href='/logout' > Salir </a></li>
+  <li id="user">Usuario: {{user.name}}</li>
+</ul>
+<div id="fullpage">
+  <div class="section " id="section0">
+     <img src="img/trikatuka.png" alt="fullPage" />
+    
+    <h1>Mi Perfil</h1>
+    <p>Infromación y datos del jugador</p>
+  </div>
+  <div class="section" id="section1">
+    <div class="intro">
+      <h1>Jugar, Competir y Ganar!</h1>
+      <p>TikaTuka, Sabe lo divertido que es jugar y competir, pero es más divertido si lo hacemos con nuestros familiares y amigos, con el fin de ganar excelentes premios.</p>
+      <img src="img/juego.png" alt="fullPage" />
+    </div>
+  </div>
+  <div class="section" id="section2">
+    <div class="intro">
+      <h1>Comó Jugar!</h1>
+      <p>La temática del juego es muy sencilla, busca el numero objetivo y continua haciéndolo hasta llegar a 121, entre más puntos logres mejor posicionado te encontraras en el Ranking de Ganadores, Juega solo o en equipo y diviértete con los diferentes niveles que te sorprenderán.</p>
+      <a  id="btn" href='/juego' type="button" class="btn btn-lg btn-block"> ¡Jugar! </a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
