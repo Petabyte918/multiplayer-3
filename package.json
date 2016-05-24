@@ -5,7 +5,7 @@
   "main": "server.js",
   "dependencies": {
     "consolidate": "^0.12.1",
-    "express": "^3.21.2",
+    "express": "^^4.13.3",
     "http": "^0.0.0",
     "mongoose": "^4.4.16",
     "passport-facebook": "^2.1.0",

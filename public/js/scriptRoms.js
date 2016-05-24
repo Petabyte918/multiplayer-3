@@ -12,7 +12,9 @@ $(function()
 		Juego = [], //Guarda toda la matriz del juego
 		NomUser = '',
 		tabla = '',
-		newJuego = 30;
+		newJuego = 30,
+		jugando = false;
+
 
 
 // Inicialización de componentes repetitivos del DOM
@@ -40,6 +42,7 @@ $(function()
 				 ];
 	var sound = true;	
 
+var Myid = '';
 		
 		
 //Genera una nueva de grilla de numeros Aleatorios
@@ -48,50 +51,80 @@ $(function()
 		if(Juego[0].length === 12){Juego[0].shift(); DibujaJuego(Juego);}else{DibujaJuego(Juego);};
 	};
 
-  	function init(){
-  		//console.log(DomUser);
-  		setTimeout(function(){
-  		websocket.emit('newUser',{Nombre:DomUser.text(),Puntaje: 0, Color: lib.randomColor()});
-  		websocket.on('error',function(data){
-    		if(data){
-    			alertify.alert('El Usuario ya Existe');
-    			//setTimeout(function(){location.reload()},1000);
-    			//Emitir una desconeccion y volver a conectar
-    		}else{
-    			websocket.on('conectados',function(info){
-    				alertify.success("Bienvenido "+info.Nombre);
-    				NomUser = info.Nombre;
-    				numClick = info.Clicks;
-    			});
+	websocket.on('msg',function(data){
+		alertify.alert(data).set({onshow:null, onclose:function(){ jugando=false; fnSalas(); }}); 
+		
+	});
+	var Salas = [],
+		htmlSalas = '';
+	var fnSalas = function(){
+		websocket.emit('TraerSalas');
+		websocket.on('Salas',function(data){
+		htmlSalas = '';
+		Salas = data;
+		for (i  in  Salas){
+			htmlSalas += '<a class="salas" id="'+Salas[i].id+'">'+Salas[i].nombre+'<a><br>';
+		} 
+		if(!jugando){
+			alertify.prompt(htmlSalas, 'Crear Sala', 
+    		function(evt, value){ 
+    			websocket.emit('newSala',{namerom: value, nombre:DomUser.text(),Puntaje: 0, Color: lib.randomColor()});
+    			jugando = true;
     		}
-    	});
-  	},1000);
-  	}init();
+		);
+		}
+		$(".salas").click(function() {
+          var oID = $(this).attr("id");
+          console.log(oID);
+          alertify.prompt().close();
+          unir(oID);
+		});
+
+		});
+	}; fnSalas();
 
 
-	websocket.on('Users',function(data){
+	websocket.on('newConection',function(data){
+		alertify.success("Bienvenido "+data.Nombre);
+		Myid = data.id;
+		NomUser = data.Nombre;
+    	numClick = data.Clicks;
+    	DomNum.html(numClick+1);
+	})
+
+	function unir(uuid){
+		websocket.emit('ingresaNewUserSala', {id: uuid, nombre: DomUser.text(), Color: lib.randomColor()});
+	}
+
+	websocket.on('inicioJuegoSala',function(data){
+		console.log(data);
+				DibujaJuego(data.juego);
+				Juego = data.juego;
+	});
+
+	websocket.on('UsersSalas',function(data){
+		console.log(data);
 		$("#Users").html("");
 		var cont = 0;
-		for (var i = data.length - 1; i >= 0; i--) {
+		for (var i = data.usuarios.length - 1; i >= 0; i--) {
 			cont++;
-			$("#Users").append("<b id='b' style='color:"+data[i].Color+"'>"+cont+". "+data[i].Nombre+" - "+data[i].Puntaje+"</b><br>");
+			$("#Users").append("<b id='b' style='color:"+data.usuarios[i].Color+"'>"+cont+". "+data.usuarios[i].Nombre+" - "+data.usuarios[i].Puntaje+"</b><br>");
 		};
-		reloadTable(data,0);
-		if(data.length<=1){
+		reloadTable(data.usuarios,0);
+		if(data.usuarios.length<=1){
 			iniciaJuego();
-			websocket.emit('IniJuego',Juego);
+			websocket.emit('IniJuegoSala',{id: data.id, juego: Juego});
 			numClick = 0;
 		}else{
-			websocket.emit('ingresaNewUser');
-			websocket.on('inicioJuego',function(juego){
-				//console.log(juego);
+			websocket.emit('ingresaNewUserSala');
+			websocket.on('inicioJuegoSala',function(juego){
 				DibujaJuego(juego);
 				Juego = juego;
 			});
 		}
 	});
 
-	websocket.on('Actualiza',function(data){
+	websocket.on('ActualizaSala',function(data){
 		$("#Users").html("");
 		var cont = 0;
 		for (var i = data.length - 1; i >= 0; i--) {
@@ -101,7 +134,7 @@ $(function()
 		reloadTable(data,0);
 	});
 
-	websocket.on('DibujeJuego',function(data){
+	websocket.on('DibujeJuegoSala',function(data){
 		Juego = data.Juego;
 		numClick = data.Clicks;
 		DibujaJuego(Juego);
@@ -111,16 +144,16 @@ $(function()
 		alertify.error("El usuario: "+info+" se a desconectado");
 	});
 
-	websocket.on("Puntua",function(info){
+	websocket.on("PuntuaSala",function(info){
 		alertify.error("El usuario: "+info+" ¡Puntua!");
 	});
 
-	websocket.on("BorraPuntajes",function(){
+	websocket.on("BorraPuntajesSala",function(){
 		Puntaje = 0;
 		DomPuntos.html(Puntaje);
 	});
 
-	websocket.on("SeReiniciaJuego",function(data){
+	websocket.on("SeReiniciaJuegoSala",function(data){
 		reloadTable(data,1);
 		alertify.dialog('alert').set({transition:'slide',title: "<b>El sistema reinicio el juego</b> " ,message: "<h3>Los puntajes quedaron así: </h3>"+tabla}).show(); 
 	});
@@ -181,7 +214,7 @@ function validaClick(id,click){
 		if(numClick<NumNumeros){
 			DomNum.html(numClick+1);
 		}
-		websocket.emit('juega',{Juego:Juego,Clicks:click,Nombre:NomUser,Puntaje: Puntaje});	
+		websocket.emit('juegaSala',{Juego:Juego,Clicks:click,Nombre:NomUser,Puntaje: Puntaje, id: Myid});	
 		return true;
 	}else{
 		numClick--;
@@ -213,7 +246,7 @@ function timer(){
 			//alertify.alert("<b>Felicitaciones a terminado el juego en: "+horas+":"+minutos+":"+segundos+" y su puntaje fue de: "+Puntaje+"</b>");
 			alertify.dialog('alert').set({transition:'slide',title: "Fin del juego" ,message: "<h3>Los puntajes quedaron así: </h3>"+tabla}).show(); 
 			numClick = 0;
-			websocket.emit("ActualizaClicks");
+			websocket.emit("ActualizaClicksSala");
 			sound === true ? createjs.Sound.play("tada") : console.log("nosound");
 			fin = true;
 			newGame();
@@ -243,7 +276,7 @@ function reiniciaTodo(){
 		minutos = 00;
 		horas = 00;
 		fin = false;
-		websocket.emit('reiniciaJuego',{Juego: Juego, Clicks: numClick});		
+		websocket.emit('reiniciaJuegoSala',{Juego: Juego, Clicks: numClick, id : Myid});		
 }
 
 

@@ -25,7 +25,7 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook',
 router.get('/juego', function(req, res, next) {
   if(req.user){
   	res.render('juego',{user:req.user});
-  }else{
+ }else{
   	res.render('index');
   }
 });
@@ -40,6 +40,15 @@ if(req.user){
 	res.render('index');
 }
 });
+
+router.get('/juegoroms', function(req, res, next) {
+  if(req.user){
+    res.render('juegoroms',{user:req.user});
+  }else{
+    res.render('index');
+  }
+});
+
 router.get("*", function(req, res){
 	
 	res.status(404).send("Página no encontrada :( en el momento");
